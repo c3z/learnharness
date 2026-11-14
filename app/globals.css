@@ -626,8 +626,9 @@ body {
    (140 - 36) left and back: lh-cat-walk alternates the translate,
    lh-cat-turn flips it (scale) at each end on the full 16s cycle — the
    art faces right, so the left-bound half is mirrored. Two leg frames
-   swap opacity every 200ms (frame 1 delayed half a step); the static
-   context shows frame 0. Reduced motion: the cat stands still. */
+   swap opacity every 200ms (frame 1 delayed half a step). No
+   reduced-motion block on purpose: the cat walks anyway (owner decision,
+   2026-11-14 — the owner runs Reduce Motion and wants to see it walk). */
 @keyframes lh-cat-walk {
 	from {
 		translate: 0 0;
@@ -674,13 +675,6 @@ body {
 
 .lh-cat-frame[data-frame="1"] {
 	animation-delay: 200ms;
-}
-
-@media (prefers-reduced-motion: reduce) {
-	.lh-cat,
-	.lh-cat-frame {
-		animation: none;
-	}
 }
 
 /* Source-message arrival: a brief, static theme-colored spotlight. */
