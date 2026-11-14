@@ -621,6 +621,68 @@ body {
 	}
 }
 
+/* The walking cat (owner request, 2026-11-14; components/walking-cat.tsx).
+   The svg starts at the right end of its 140px lane and walks 104px
+   (140 - 36) left and back: lh-cat-walk alternates the translate,
+   lh-cat-turn flips it (scale) at each end on the full 16s cycle — the
+   art faces right, so the left-bound half is mirrored. Two leg frames
+   swap opacity every 200ms (frame 1 delayed half a step); the static
+   context shows frame 0. Reduced motion: the cat stands still. */
+@keyframes lh-cat-walk {
+	from {
+		translate: 0 0;
+	}
+	to {
+		translate: -104px 0;
+	}
+}
+
+@keyframes lh-cat-turn {
+	0% {
+		scale: -1 1;
+	}
+	50%,
+	100% {
+		scale: 1 1;
+	}
+}
+
+@keyframes lh-cat-step {
+	0% {
+		opacity: 1;
+	}
+	50%,
+	100% {
+		opacity: 0;
+	}
+}
+
+.lh-cat {
+	animation:
+		lh-cat-walk 8s linear infinite alternate,
+		lh-cat-turn 16s step-end infinite;
+}
+
+.lh-cat-frame {
+	animation: lh-cat-step 400ms step-end infinite;
+	opacity: 0;
+}
+
+.lh-cat-frame[data-frame="0"] {
+	opacity: 1;
+}
+
+.lh-cat-frame[data-frame="1"] {
+	animation-delay: 200ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.lh-cat,
+	.lh-cat-frame {
+		animation: none;
+	}
+}
+
 /* Source-message arrival: a brief, static theme-colored spotlight. */
 .lh-source-passage {
 	scroll-margin-top: 1rem;
