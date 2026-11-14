@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { MaximizeIcon, MinusIcon, PlusIcon, XIcon } from "lucide-react";
+import { FileDownIcon, Loader2Icon, MaximizeIcon, MinusIcon, PlusIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fitGraphView, fitZoomFor, zoomedGraphView, type Viewport } from "@/components/pan-zoom";
 import { renderMermaid } from "@/components/mermaid-render";
@@ -9,6 +9,7 @@ import { useAppearance } from "@/components/settings/appearance";
 import { MermaidError } from "@/components/mermaid-error";
 import { Hint } from "@/components/ui/hint";
 import { SvgImage } from "@/components/artifacts/svg-image";
+import { downloadFigurePdf } from "@/components/artifacts/figure-pdf";
 import { InteractionLayerOwner, useInteractionLayer } from "./interaction-layers";
 
 /**
@@ -219,6 +220,22 @@ export function MermaidOverlay({
 		setView(fitGraphView(box, size, fitZoom));
 	};
 
+	// ── figure PDF export (figure mode only; original colors, invert is display only) ──
+	const figureMode = rawSvg !== undefined && !image;
+	const [pdfState, setPdfState] = useState<"idle" | "busy" | "failed">("idle");
+	const exportPdf = async () => {
+		if (!figureMode || pdfState === "busy") return;
+		setPdfState("busy");
+		try {
+			await downloadFigurePdf(rawSvg, chartSize(rawSvg));
+			setPdfState("idle");
+		} catch (e) {
+			console.error("[figure-pdf]", e);
+			setPdfState("failed");
+		}
+	};
+	const pdfLabel = pdfState === "failed" ? "PDF export failed - try again" : "Download as PDF";
+
 	return (
 		<InteractionLayerOwner.Provider value={layer.id}>
 		<div
@@ -237,13 +254,31 @@ export function MermaidOverlay({
 			<div className="mb-2 flex items-center gap-2">
 				<span className="text-sm font-medium">{mediaName}</span>
 				<span className="text-xs text-muted-foreground">from this lesson</span>
+				{figureMode && (
+					<Hint label={pdfLabel} side="left">
+<button
+						type="button"
+						onClick={() => void exportPdf()}
+						disabled={pdfState === "busy"}
+						aria-label={pdfLabel}
+						aria-busy={pdfState === "busy"}
+						data-testid="figure-pdf-download"
+						className={cn(
+							"ml-auto rounded-lg p-1.5 transition-colors hover:bg-accent disabled:opacity-50",
+							pdfState === "failed" ? "text-destructive" : "text-muted-foreground hover:text-foreground",
+						)}
+					>
+						{pdfState === "busy" ? <Loader2Icon className="size-4 animate-spin" /> : <FileDownIcon className="size-4" />}
+					</button>
+</Hint>
+				)}
 				<Hint label="Close" binding="escape" side="left">
 <button
 					type="button"
 					onClick={onClose}
 					aria-label="Close"
 					data-testid="mermaid-overlay-close"
-					className="ml-auto rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+					className={cn(!figureMode && "ml-auto", "rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground")}
 				>
 					<XIcon className="size-4" />
 				</button>
