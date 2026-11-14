@@ -13,8 +13,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { renderToStaticMarkup as renderMarkup } from "react-dom/server";
 import { InteractionLayersProvider } from "../components/interaction-layers.tsx";
-import { MermaidOverlay } from "../components/session-overlay.tsx";
-import { figurePdfLayout } from "../components/artifacts/figure-pdf.ts";
+import { MermaidOverlay, chartSize } from "../components/session-overlay.tsx";
+import { figureDisplaySize, figurePdfLayout } from "../components/artifacts/figure-pdf.ts";
 
 const renderToStaticMarkup = (node: React.ReactNode) => renderMarkup(<InteractionLayersProvider>{node}</InteractionLayersProvider>);
 
@@ -52,6 +52,61 @@ describe("figure pdf - layout", () => {
 			}
 			assert.ok(bitmap.w >= 1 && bitmap.h >= 1);
 		}
+	});
+});
+
+describe("figure pdf - size from what the popup shows", () => {
+	// The popup draws the <img> at the box width (chartSize) with the image's
+	// own aspect (h-auto). Chrome gives a viewBox-only svg the right aspect but
+	// not its size (viewBox 800x600 -> natural 200x150), so the width comes
+	// from the box and the aspect from the loaded image.
+	it("width/height 400x200 with viewBox 100x100 keeps the 2:1 image aspect (a circle stays a circle)", () => {
+		const size = figureDisplaySize({ w: 100, h: 100 }, { w: 400, h: 200 });
+		assert.deepEqual(size, { w: 100, h: 50 });
+		assert.deepEqual(figurePdfLayout(size).page, { w: 75, h: 37.5 });
+	});
+
+	it("a viewBox-only figure keeps its viewBox size (Chrome natural 200x150 only gives the aspect)", () => {
+		assert.deepEqual(figureDisplaySize({ w: 800, h: 600 }, { w: 200, h: 150 }), { w: 800, h: 600 });
+	});
+
+	it("an image with no natural size (0) falls back to the box", () => {
+		assert.deepEqual(figureDisplaySize({ w: 800, h: 600 }, { w: 0, h: 0 }), { w: 800, h: 600 });
+		assert.deepEqual(figureDisplaySize({ w: 800, h: 600 }, { w: 300, h: 0 }), { w: 800, h: 600 });
+	});
+});
+
+describe("figure pdf - page limit", () => {
+	it("24000x800 px scales the page so the longer side is 14400 pt, same aspect", () => {
+		const { page, orientation, bitmap } = figurePdfLayout({ w: 24000, h: 800 });
+		assert.equal(page.w, 14400);
+		assert.equal(page.h, 480);
+		assert.equal(orientation, "landscape");
+		assert.equal(bitmap.w, 4096);
+		assert.ok(Math.abs(page.w / page.h - 30) < 1e-9, "aspect 30:1 kept");
+	});
+
+	it("a tall page is capped on its height", () => {
+		const { page } = figurePdfLayout({ w: 600, h: 30000 });
+		assert.equal(page.h, 14400);
+		assert.equal(page.w, 288);
+	});
+});
+
+describe("chartSize - root svg only", () => {
+	it("a nested svg's viewBox does not replace the root width/height", () => {
+		assert.deepEqual(
+			chartSize('<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600"><rect width="800" height="600"/><svg x="10" y="10" width="48" height="48" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg></svg>'),
+			{ w: 800, h: 600 },
+		);
+	});
+
+	it("nested width/height do not count when the root has neither", () => {
+		assert.deepEqual(chartSize('<svg xmlns="http://www.w3.org/2000/svg"><svg width="48" height="48"></svg></svg>'), { w: 600, h: 400 });
+	});
+
+	it("a '>' inside a root attribute value does not end the root tag early", () => {
+		assert.deepEqual(chartSize('<svg data-note="a > b" viewBox="0 0 320 240"></svg>'), { w: 320, h: 240 });
 	});
 });
 

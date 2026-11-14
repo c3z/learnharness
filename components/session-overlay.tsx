@@ -57,14 +57,18 @@ export function useSessionMermaid() {
  *  pair is the fallback. The final fallback covers a degenerate svg with
  *  neither. Pure. */
 export function chartSize(svg: string): { w: number; h: number } {
-	const m = /<svg[^>]*\bviewBox="([\d.eE+-]+)\s+([\d.eE+-]+)\s+([\d.eE+-]+)\s+([\d.eE+-]+)"/.exec(svg);
+	// Only the ROOT tag counts: a nested <svg> (an icon inside a figure) has its
+	// own viewBox/width/height that must not size the figure. Quoted attribute
+	// values are consumed whole, so a ">" inside one does not end the tag.
+	const root = /<svg(?=[\s/>])(?:[^<>"']|"[^"]*"|'[^']*')*>/i.exec(svg)?.[0] ?? "";
+	const m = /\sviewBox="([\d.eE+-]+)\s+([\d.eE+-]+)\s+([\d.eE+-]+)\s+([\d.eE+-]+)"/.exec(root);
 	if (m) {
 		const w = Number.parseFloat(m[3]!);
 		const h = Number.parseFloat(m[4]!);
 		if (Number.isFinite(w) && Number.isFinite(h) && w > 0 && h > 0) return { w, h };
 	}
 	const attr = (name: string): number | null => {
-		const a = new RegExp(`<svg\\b[^>]*?\\b${name}\\s*=\\s*["'](\\d+(?:\\.\d+)?)(?:px)?["']`, "i").exec(svg);
+		const a = new RegExp(`\\s${name}\\s*=\\s*["'](\\d+(?:\\.\d+)?)(?:px)?["']`, "i").exec(root);
 		if (!a) return null;
 		const n = Number.parseFloat(a[1]!);
 		return Number.isFinite(n) && n > 0 ? n : null;
