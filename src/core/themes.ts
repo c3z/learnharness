@@ -140,7 +140,10 @@ function builtin(name: string, mode: ThemeMode, c: ThemeColors): Theme {
  *  accents; orange accent, blue/purple/aqua emphasis. Ivory: warm ivory
  *  page, terracotta accent, blue/green/clay emphasis. Pastel: a gray-cream
  *  page with soft green, purple and orange inks. NvChad Onedark: base46's
- *  onedark. */
+ *  onedark. Kanagawa Dragon: kanagawa.nvim's dragon variant
+ *  (dragonBlack3/4/5), dragonBlue2 accent, violet/pink/orange emphasis.
+ *  Naysayer: Jonathan Blow's editor colors, a dark sea-green page with
+ *  warm cream text and a teal accent. */
 export const BUILTIN_THEMES: readonly Theme[] = [
 	{
 		id: DEFAULT_THEME_ID,
@@ -202,6 +205,16 @@ export const BUILTIN_THEMES: readonly Theme[] = [
 		background: "#1e222a", surface: "#282c34", border: "#42464e", text: "#abb2bf", textMuted: "#565c64",
 		accent: "#61afef", bold: "#c882e7", italic: "#a3b8ef", code: "#e7c787",
 		error: "#e06c75", success: "#98c379", warning: "#e7c787",
+	}),
+	builtin("Kanagawa Dragon", "dark", {
+		background: "#181616", surface: "#282727", border: "#393836", text: "#c5c9c5", textMuted: "#a6a69c",
+		accent: "#8ba4b0", bold: "#8992a7", italic: "#a292a3", code: "#b6927b",
+		error: "#c4746e", success: "#87a987", warning: "#c4b28a",
+	}),
+	builtin("Naysayer", "dark", {
+		background: "#062329", surface: "#0a2e35", border: "#2a4a4a", text: "#d1b897", textMuted: "#9a8a6a",
+		accent: "#22b59e", bold: "#f5efe0", italic: "#afc6ce", code: "#7ad0c6",
+		error: "#c74138", success: "#8cde94", warning: "#c7a538",
 	}),
 ];
 
